@@ -13,7 +13,7 @@ from models import FilmWork, Genre, GenreFilmWork, Person, PersonFilmWork
 load_dotenv()
 psycopg2.extras.register_uuid()
 
-LOADING_SIZE = 100
+LOADING_SIZE = 10000
 
 
 @contextmanager
@@ -36,7 +36,7 @@ def load_from_sqlite(sqlite_conn: sqlite3.Connection, pg_conn: _connection):
         pg_controller.load_to_db(Person, data)
     for data in sqlite_controller.extract_genre_film_work(LOADING_SIZE):
         pg_controller.load_to_db(GenreFilmWork, data)
-    for data in sqlite_controller.extract_person_film_work(100):
+    for data in sqlite_controller.extract_person_film_work(LOADING_SIZE):
         pg_controller.load_to_db(PersonFilmWork, data)
 
 
@@ -50,5 +50,4 @@ if __name__ == '__main__':
     }
     with (sqlite_conntection('db.sqlite') as sqlite_conn,
           psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn):
-        sqlite_conn.row_factory = sqlite3.Row
         load_from_sqlite(sqlite_conn, pg_conn)
