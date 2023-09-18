@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS genre_film_work (
     created TIMESTAMP WITH TIME ZONE,
 
     PRIMARY KEY(id),
-    FOREIGN KEY (genre_id) REFERENCES genre (id),
-    FOREIGN KEY (film_work_id) REFERENCES film_work (id)
+    FOREIGN KEY (genre_id) REFERENCES genre (id) ON DELETE CASCADE,
+    FOREIGN KEY (film_work_id) REFERENCES film_work (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS person_film_work (
@@ -53,12 +53,12 @@ CREATE TABLE IF NOT EXISTS person_film_work (
     created TIMESTAMP WITH TIME ZONE,
 
     PRIMARY KEY(id),
-    FOREIGN KEY (person_id) REFERENCES person (id),
-    FOREIGN KEY (film_work_id) REFERENCES film_work (id)
+    FOREIGN KEY (person_id) REFERENCES person (id) ON DELETE CASCADE,
+    FOREIGN KEY (film_work_id) REFERENCES film_work (id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS genre_film_work_idx ON genre_film_work (genre_id, film_work_id);
 CREATE UNIQUE INDEX IF NOT EXISTS genre_name_idx ON genre (name);
-CREATE INDEX IF NOT EXISTS person_film_work_idx ON person_film_work (film_work_id, person_id);
+CREATE UNIQUE INDEX IF NOT EXISTS person_film_work_idx ON person_film_work (film_work_id, person_id, role);
 
 COMMIT;

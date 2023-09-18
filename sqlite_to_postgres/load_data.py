@@ -20,23 +20,35 @@ LOADING_SIZE = 10000
 def sqlite_conntection(db_path: str):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    yield conn
-    conn.close()
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+@contextmanager
+def postgres_conntection(**kwargs):
+    conn = psycopg2.connect(**kwargs, cursor_factory=DictCursor)
+    try:
+        yield conn
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def load_from_sqlite(sqlite_conn: sqlite3.Connection, pg_conn: _connection):
     """Основной метод загрузки данных из SQLite в Postgres"""
     sqlite_controller = SqliteController(sqlite_conn)
     pg_controller = PGController(pg_conn)
-    for data in sqlite_controller.extract_filmwork(LOADING_SIZE):
+    for data in sqlite_controller.extract_data(FilmWork, LOADING_SIZE):
         pg_controller.load_to_db(FilmWork, data)
-    for data in sqlite_controller.extract_genre(LOADING_SIZE):
+    for data in sqlite_controller.extract_data(Genre, LOADING_SIZE):
         pg_controller.load_to_db(Genre, data)
-    for data in sqlite_controller.extract_person(LOADING_SIZE):
+    for data in sqlite_controller.extract_data(Person, LOADING_SIZE):
         pg_controller.load_to_db(Person, data)
-    for data in sqlite_controller.extract_genre_film_work(LOADING_SIZE):
+    for data in sqlite_controller.extract_data(GenreFilmWork, LOADING_SIZE):
         pg_controller.load_to_db(GenreFilmWork, data)
-    for data in sqlite_controller.extract_person_film_work(LOADING_SIZE):
+    for data in sqlite_controller.extract_data(PersonFilmWork, LOADING_SIZE):
         pg_controller.load_to_db(PersonFilmWork, data)
 
 
@@ -49,5 +61,5 @@ if __name__ == '__main__':
         'port': os.environ.get('DB_PORT')
     }
     with (sqlite_conntection('db.sqlite') as sqlite_conn,
-          psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn):
+          postgres_conntection(**dsl) as pg_conn):
         load_from_sqlite(sqlite_conn, pg_conn)

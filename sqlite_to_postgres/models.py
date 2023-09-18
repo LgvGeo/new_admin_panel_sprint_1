@@ -2,54 +2,73 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+import dateutil.parser
+from pydantic import (AliasChoices, BaseModel, ConfigDict, Field,
+                      field_validator)
 
 
-class FilmWork(BaseModel):
+class CustomBaseModel(BaseModel):
+    id: uuid.UUID
 
+    @field_validator(
+            'created', 'modified',
+            'creation_date',
+            mode='before', check_fields=False)
+    @classmethod
+    def str2datetime(cls, date) -> datetime:
+        if date is None:
+            return date
+        return dateutil.parser.isoparse(str(date))
+
+
+class CreatedModifiedMixin(BaseModel):
+    created: Optional[datetime] = Field(
+        validation_alias=AliasChoices('created_at', 'created')
+    )
+    modified: Optional[datetime] = Field(
+        validation_alias=AliasChoices('updated_at', 'modified')
+    )
+
+
+class FilmWork(CustomBaseModel, CreatedModifiedMixin):
     model_config = ConfigDict(title='film_work')
 
-    id: uuid.UUID
     title: str
     description: Optional[str]
-    creation_date: Optional[str]
+    creation_date: Optional[datetime]
     rating: Optional[float]
     type: str
-    created: Optional[datetime]
-    modified: Optional[datetime]
 
 
-class Person(BaseModel):
-    id: uuid.UUID
+class Person(CustomBaseModel, CreatedModifiedMixin):
+    model_config = ConfigDict(title='person')
+
     full_name: str
-    created: Optional[datetime]
-    modified: Optional[datetime]
 
 
-class Genre(BaseModel):
-    id: uuid.UUID
+class Genre(CustomBaseModel, CreatedModifiedMixin):
+    model_config = ConfigDict(title='genre')
+
     name: str
     description: Optional[str]
-    created: Optional[datetime]
-    modified: Optional[datetime]
 
 
-class GenreFilmWork(BaseModel):
-
+class GenreFilmWork(CustomBaseModel):
     model_config = ConfigDict(title='genre_film_work')
 
-    id: uuid.UUID
     genre_id: uuid.UUID
     film_work_id: uuid.UUID
-    created: Optional[datetime]
+    created: Optional[datetime] = Field(
+        validation_alias=AliasChoices('created_at')
+    )
 
 
-class PersonFilmWork(BaseModel):
-
+class PersonFilmWork(CustomBaseModel):
     model_config = ConfigDict(title='person_film_work')
 
-    id: uuid.UUID
     person_id: uuid.UUID
     film_work_id: uuid.UUID
     role: str
-    created: Optional[datetime]
+    created: Optional[datetime] = Field(
+        validation_alias=AliasChoices('created_at')
+    )

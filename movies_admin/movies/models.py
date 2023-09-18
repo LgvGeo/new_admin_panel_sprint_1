@@ -55,9 +55,10 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     description = models.TextField(_('description'), blank=True)
     creation_date = models.DateField(_('creation date'), null=True)
     genres = models.ManyToManyField(
-        'Genre', through='GenreFilmwork', verbose_name=_('genres'))
+        Genre, through='GenreFilmwork',
+        verbose_name=_('genres'), related_name='genres')
     persons = models.ManyToManyField(
-        'Person', through='PersonFilmwork', verbose_name=_('persons'))
+        Person, through='PersonFilmwork', verbose_name=_('persons'))
     rating = models.FloatField(
         _('rating'),
         validators=[MaxValueValidator(100), MinValueValidator(0)])
@@ -74,8 +75,8 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
 
 
 class GenreFilmwork(UUIDMixin):
-    genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
-    film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    film_work = models.ForeignKey(Filmwork, on_delete=models.CASCADE)
     created = models.DateTimeField(_('created'), auto_now_add=True)
 
     class Meta:
@@ -94,9 +95,25 @@ class GenreFilmwork(UUIDMixin):
 
 class PersonFilmwork(UUIDMixin):
 
-    person = models.ForeignKey('Person', on_delete=models.CASCADE)
-    film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
-    role = models.CharField(_('role'), max_length=255)
+    class RoleChoices(models.TextChoices):
+        ACTOR = 'actor', _('actor')
+        WRITER = 'writer', _('writer')
+        DIRECTOR = 'director', _('director')
+
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE,
+        related_name='persons'
+    )
+    film_work = models.ForeignKey(
+        Filmwork,
+        on_delete=models.CASCADE,
+        related_name='filmworks'
+    )
+    role = models.CharField(
+        _('role'),
+        choices=RoleChoices.choices, max_length=255
+    )
     created = models.DateTimeField(_('created'), auto_now_add=True)
 
     class Meta:
